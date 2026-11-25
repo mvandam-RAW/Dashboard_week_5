@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Café De Binnenplaats</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f9;--surface:#ffffff;--ink:#191919;--ink2:#666666;
+  --grid:#e7e7e7;--axis:#c2c2c2;--border:rgba(11,11,11,.10);
+  --s1:#257de0;--s2:#f47230;--rust:#c2c2c2;--neg:#b3261e;--pos:#006c10;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --page:#0b0b0b;--surface:#191919;--ink:#efefef;--ink2:#9c9c9c;
+    --grid:#303030;--axis:#474747;--border:rgba(255,255,255,.10);
+    --s1:#338ced;--s2:#e76624;--rust:#5c5c5c;--neg:#eb6263;--pos:#53c556;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 16px 48px}
+header h1{font-size:1.5rem;margin:0 0 4px;font-weight:650}
+header p{margin:0;color:var(--ink2);font-size:.95rem}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+@media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi,.card{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.kpi{padding:16px}
+.kpi .label{color:var(--ink2);font-size:.85rem}
+.kpi .value{font-size:1.6rem;font-weight:650;line-height:1.25;margin-top:4px}
+.kpi .sub{color:var(--ink2);font-size:.8rem;margin-top:2px}
+.card{padding:20px 16px 16px;margin-bottom:16px}
+.card h2{font-size:1.1rem;margin:0 0 2px;font-weight:650}
+.card .subtitle{color:var(--ink2);font-size:.9rem;margin:0 0 12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--ink2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font:12px system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--ink2);font-variant-numeric:tabular-nums}
+.chart text.val{fill:var(--ink);font-weight:600}
+.chart .mark{cursor:default;outline:none}
+.chart .mark:hover,.chart .mark:focus{filter:brightness(1.12)}
+.actie{margin:14px 0 0;padding:12px 14px;border-left:3px solid var(--s1);background:var(--page);border-radius:0 8px 8px 0;font-size:.97rem}
+.actie b{font-weight:650}
+details{margin-top:10px;font-size:.85rem;color:var(--ink2)}
+summary{cursor:pointer}
+table{border-collapse:collapse;margin-top:8px;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:4px 8px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 10px;border-radius:8px;font-size:.85rem;line-height:1.35;opacity:0;transition:opacity .08s;z-index:10;max-width:240px}
+#tip b{display:block;font-size:.95rem}
+.sectie{font-size:1.1rem;font-weight:650;margin:24px 0 2px}
+.sectie+p{margin:0 0 12px;color:var(--ink2);font-size:.9rem}
+.delta{font-size:.9rem;font-weight:600;margin-top:4px}
+.delta.min{color:var(--neg)}.delta.plus{color:var(--pos)}.delta.gelijk{color:var(--ink2)}
+.waar{margin:0 0 8px;font-size:.97rem}
+.jaar{color:var(--ink2);font-size:.85rem;margin:0 0 8px}
+.todo{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px;margin:16px 0}
+.todo h2{font-size:1.1rem;margin:0 0 8px;font-weight:650}
+.todo ol{margin:0;padding:0;list-style:none;counter-reset:n}
+.todo li{counter-increment:n;display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:baseline;padding:10px 0;border-top:1px solid var(--grid)}
+.todo li::before{content:counter(n);font-weight:650;color:var(--ink2)}
+.todo a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--axis);text-underline-offset:3px}
+.todo .bedrag{font-weight:650;white-space:nowrap}
+.todo small{grid-column:2/4;color:var(--ink2);font-size:.85rem}
+@media (max-width:560px){.todo li{grid-template-columns:28px 1fr}.todo .bedrag{grid-column:2}.todo small{grid-column:2}}
+.kpis{margin:0 0 12px!important}
+footer{color:var(--ink2);font-size:.8rem;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Café De Binnenplaats</h1>
+  <p>De Koepel, Haarlem. Stand per zondag 4 oktober 2026.</p>
+</header>
+
+<h2 class="sectie">Vorige week: 6% minder omzet dan normaal</h2>
+<p>Ma 28 sep t/m zo 4 okt, vergeleken met het gemiddelde van de 4 weken ervoor.</p>
+<section class="kpis" aria-label="Kerncijfers vorige week">
+  <div class="kpi"><div class="label">Omzet</div><div class="value">€ 23.041</div><div class="delta min">▼ 5,9% lager</div><div class="sub">normaal € 24.473</div></div>
+  <div class="kpi"><div class="label">Aantal bonnen</div><div class="value">698</div><div class="delta min">▼ 5,0% lager</div><div class="sub">normaal 735</div></div>
+  <div class="kpi"><div class="label">Gemiddelde bon</div><div class="value">€ 33,01</div><div class="delta gelijk">● vrijwel gelijk</div><div class="sub">normaal € 33,30</div></div>
+  <div class="kpi"><div class="label">Over na inkoop (brutomarge)</div><div class="value">€ 14.177</div><div class="delta min">▼ 5,8% lager</div><div class="sub">68,4% van de omzet, gelijk gebleven</div></div>
+</section>
+<p class="waar"><b>Waar zat het:</b> minder bonnen, niet een lagere bon. De ochtend liep het meest terug (€ 391 lager, 20%), daarna lunch (€ 624 lager, 7%) en diner (€ 395 lager, 7%). De borrel deed het iets beter (€ 118 hoger).</p>
+<p class="jaar">Heel jaar (1 okt 2025 t/m 4 okt 2026): omzet € 1.173.756, 35.984 bonnen, gemiddelde bon € 32,62, brutomarge 68,5%. Bedragen inclusief btw, zonder fooi.</p>
+
+<section class="todo">
+  <h2>Deze week doen</h2>
+  <ol>
+    <li><a href="#diner">Doorrekenen: diner op maandag en dinsdag</a><span class="bedrag">€ 68.000 per jaar</span><small>Extra omzet op woensdagniveau, vóór loonkosten van de keuken.</small></li>
+    <li><a href="#water">Bediening: eerst een drankje aanbieden, dan pas de karaf water</a><span class="bedrag">tot € 26.500 per jaar</span><small>Als tafels met gratis water evenveel gaan uitgeven als de rest. Reken op een deel hiervan.</small></li>
+    <li><a href="#stil">Aanbod bedenken voor de stille uren</a><span class="bedrag">nog geen bedrag</span><small>8 tot 11 uur en 15 tot 17 uur: 5 van de 14 open uren, 18% van de omzet.</small></li>
+  </ol>
+</section>
+
+<section class="card" id="diner">
+  <h2>Maandag en dinsdag missen het diner</h2>
+  <p class="subtitle">Gemiddelde omzet per dag in euro. Oranje is het diner.</p>
+  <div class="legend" id="leg1"></div>
+  <div class="chart" id="c1"></div>
+  <p class="actie"><b>Wat te doen:</b> reken door wat een keukenploeg op maandag en dinsdagavond kost, want op woensdagniveau levert diner op die twee avonden ongeveer € 68.000 extra omzet per jaar op.</p>
+  <details><summary>Toon cijfers</summary><div class="scroll" id="t1"></div></details>
+</section>
+
+<section class="card" id="water">
+  <h2>Tafels met gratis water geven minder uit</h2>
+  <p class="subtitle">Besteding per gast aan tafel, met en zonder karaf water op de bon</p>
+  <div class="legend" id="leg2"></div>
+  <div class="chart" id="c2"></div>
+  <p class="actie"><b>Wat te doen:</b> laat de bediening eerst een drankje aanbieden en de karaf water pas daarna brengen, want tafels met gratis water geven € 2,65 (lunch) tot € 3,17 (diner) per gast minder uit.</p>
+  <details><summary>Toon cijfers</summary><div class="scroll" id="t2"></div></details>
+</section>
+
+<section class="card" id="stil">
+  <h2>De ochtend en de middag zijn stil</h2>
+  <p class="subtitle">Gemiddelde omzet per uur in euro. Blauw zijn de stille uren.</p>
+  <div class="legend" id="leg3"></div>
+  <div class="chart" id="c3"></div>
+  <p class="actie"><b>Wat te doen:</b> maak een vast aanbod voor de stille uren (8 tot 11 uur en 15 tot 17 uur), bijvoorbeeld koffie met gebak, want die 5 van de 14 open uren leveren nu maar 18% van de omzet.</p>
+  <details><summary>Toon cijfers</summary><div class="scroll" id="t3"></div></details>
+</section>
+
+<footer>
+  Oefendata, de zaak is fictief. Omzet is inclusief btw en zonder fooi. Brutomarge is omzet exclusief btw min de kostprijs uit de productkaart. Diner is er alleen van woensdag t/m zondag, de uren na 19 uur zijn gemiddeld over alle open dagen. Het verband tussen water en besteding is een samenhang, geen bewezen oorzaak.
+</footer>
+</main>
+<div id="tip" role="status"></div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const eur=(v,d=0)=>'€ '+v.toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const el=(n,a={},t)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;return e};
+const tip=document.getElementById('tip');
+function showTip(ev,title,lines){
+  tip.textContent='';const b=document.createElement('b');b.textContent=title;tip.appendChild(b);
+  lines.forEach(l=>{const d=document.createElement('div');d.textContent=l;tip.appendChild(d)});
+  tip.style.opacity=1;
+  let x,y;
+  if(ev.clientX!==undefined&&ev.type!=='focus'){x=ev.clientX+12;y=ev.clientY+12}
+  else{const r=ev.target.getBoundingClientRect();x=r.right+8;y=r.top}
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  if(x+w>innerWidth-8)x=Math.max(8,x-w-24);
+  if(y+h>innerHeight-8)y=innerHeight-h-8;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+const hideTip=()=>tip.style.opacity=0;
+function hook(node,title,lines){
+  node.classList.add('mark');node.setAttribute('tabindex','0');
+  node.setAttribute('aria-label',title+': '+lines.join(', '));
+  node.addEventListener('pointermove',e=>showTip(e,title,lines));
+  node.addEventListener('pointerleave',hideTip);
+  node.addEventListener('focus',e=>showTip(e,title,lines));
+  node.addEventListener('blur',hideTip);
+}
+// kolom met ronde bovenkant, recht aan de basis
+function colPath(x,y,w,h,r){r=Math.min(r,h,w/2);return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`}
+function frame(host,H,max,step,fmt){
+  host.textContent='';
+  const W=host.clientWidth,m={t:22,r:8,b:28,l:46},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,height:H,role:'img'});
+  const y=v=>m.t+ih-(v/max)*ih;
+  for(let v=0;v<=max+1e-9;v+=step){
+    svg.appendChild(el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css(v===0?'--axis':'--grid'),'stroke-width':1}));
+    svg.appendChild(el('text',{x:m.l-8,y:y(v)+4,'text-anchor':'end'},fmt(v)));
+  }
+  host.appendChild(svg);
+  return {svg,W,H,m,iw,ih,y};
+}
+function legend(id,items){
+  const host=document.getElementById(id);host.textContent='';
+  items.forEach(([name,col])=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=`var(${col})`;s.appendChild(i);s.appendChild(document.createTextNode(name));host.appendChild(s)});
+}
+function table(id,head,rows){
+  const host=document.getElementById(id);host.textContent='';
+  const t=document.createElement('table');const tr=document.createElement('tr');
+  head.forEach(h=>{const th=document.createElement('th');th.textContent=h;tr.appendChild(th)});t.appendChild(tr);
+  rows.forEach(r=>{const tr=document.createElement('tr');r.forEach(c=>{const td=document.createElement('td');td.textContent=c;tr.appendChild(td)});t.appendChild(tr)});
+  host.appendChild(t);
+}
+
+// ---- samengevatte cijfers (geen ruwe kassadata) ----
+const dagdelen=[['Ochtend'],['Lunch'],['Middag'],['Borrel'],['Diner']];
+const groepen=[['Ochtend t/m borrel','--s1'],['Diner','--s2']];
+const week=[
+ ['Ma',[214,918,211,501,0]],['Di',[209,905,229,537,0]],['Wo',[240,1035,278,610,845]],
+ ['Do',[252,1125,294,622,894]],['Vr',[332,1389,365,830,1095]],['Za',[401,1724,451,997,1389]],['Zo',[303,1306,340,809,1057]]];
+const water=[['Lunch',15.08,12.43],['Diner',18.51,15.34]];
+const uren=[[8,91],[9,95],[10,95],[11,316],[12,292],[13,297],[14,305],[15,157],[16,156],[17,358],[18,555],[19,185],[20,188],[21,197]];
+
+function chart1(){
+  const f=frame(document.getElementById('c1'),280,5000,1000,v=>v.toLocaleString('nl-NL'));
+  const band=f.iw/week.length,bw=Math.min(24,band*0.6);
+  week.forEach(([dag,vals],i)=>{
+    const x=f.m.l+band*i+(band-bw)/2,tot=vals.reduce((a,b)=>a+b,0),diner=vals[4],rest=tot-diner;
+    const yr=f.y(rest);
+    const n1=diner>0?el('rect',{x,y:yr,width:bw,height:f.y(0)-yr,fill:css('--s1')}):el('path',{d:colPath(x,yr,bw,f.y(0)-yr,4),fill:css('--s1')});
+    hook(n1,dag+', ochtend t/m borrel',[eur(rest)+' per dag',...vals.slice(0,4).map((v,k)=>dagdelen[k][0]+' '+eur(v))]);
+    f.svg.appendChild(n1);
+    if(diner>0){
+      const yd=f.y(tot);
+      const n2=el('path',{d:colPath(x,yd,bw,yr-yd-2,4),fill:css('--s2')});
+      hook(n2,dag+', diner',[eur(diner)+' per dag']);f.svg.appendChild(n2);
+    }else{
+      if(band>=80)f.svg.appendChild(el('text',{x:x+bw/2,y:f.y(tot)-22,'text-anchor':'middle'},'geen diner'));
+      else if(i===0)f.svg.appendChild(el('text',{x:x+bw/2+band/2,y:f.y(tot)-24,'text-anchor':'middle'},'geen diner'));
+    }
+    f.svg.appendChild(el('text',{x:x+bw/2,y:f.y(tot)-6,'text-anchor':'middle',class:'val'},tot.toLocaleString('nl-NL')));
+    f.svg.appendChild(el('text',{x:x+bw/2,y:f.H-8,'text-anchor':'middle'},dag));
+  });
+}
+function chart2(){
+  const f=frame(document.getElementById('c2'),240,20,5,v=>'€ '+v);
+  const band=f.iw/water.length,bw=24;
+  water.forEach(([naam,zonder,met],i)=>{
+    const cx=f.m.l+band*i+band/2;
+    [[zonder,'--s1','zonder water',-bw-1],[met,'--s2','met water',1]].forEach(([v,col,lab,dx])=>{
+      const x=cx+dx,y=f.y(v);
+      const node=el('path',{d:colPath(x,y,bw,f.y(0)-y,4),fill:css(col)});
+      hook(node,naam+', '+lab,[eur(v,2)+' per gast']);
+      f.svg.appendChild(node);
+      f.svg.appendChild(el('text',{x:x+bw/2+(dx<0?-6:6),y:y-6,'text-anchor':'middle',class:'val'},v.toLocaleString('nl-NL',{minimumFractionDigits:2})));
+    });
+    f.svg.appendChild(el('text',{x:cx,y:f.H-8,'text-anchor':'middle'},naam));
+  });
+}
+function chart3(){
+  const f=frame(document.getElementById('c3'),260,600,200,v=>'€ '+v);
+  const band=f.iw/uren.length,bw=Math.min(24,band*0.62);
+  uren.forEach(([u,v],i)=>{
+    const x=f.m.l+band*i+(band-bw)/2,y=f.y(v);
+    const stil=u<11||u===15||u===16;
+    const node=el('path',{d:colPath(x,y,bw,f.y(0)-y,4),fill:css(stil?'--s1':'--rust')});
+    hook(node,u+':00 tot '+(u+1)+':00',[eur(v)+' per dag',...(stil?['stil uur']:[])]);
+    f.svg.appendChild(node);
+    if(u===8||u===15||u===18)f.svg.appendChild(el('text',{x:x+bw/2,y:y-6,'text-anchor':'middle',class:'val'},v));
+    if(band>=30||i%2===0)f.svg.appendChild(el('text',{x:x+bw/2,y:f.H-8,'text-anchor':'middle'},u+'u'));
+  });
+}
+function draw(){chart1();chart2();chart3()}
+legend('leg1',groepen);
+legend('leg3',[['Stille uren','--s1'],['Overige uren','--rust']]);
+legend('leg2',[['Zonder karaf water','--s1'],['Met karaf water','--s2']]);
+table('t1',['Dag',...dagdelen.map(d=>d[0]),'Totaal'],week.map(([d,v])=>[d,...v.map(n=>n?eur(n):'geen'),eur(v.reduce((a,b)=>a+b,0))]));
+table('t2',['Dagdeel','Zonder water','Met water','Verschil'],water.map(([n,a,b])=>[n,eur(a,2),eur(b,2),eur(a-b,2)]));
+table('t3',['Uur','Omzet per dag'],uren.map(([u,v])=>[u+':00 tot '+(u+1)+':00',eur(v)]));
+draw();
+let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(draw,120)});
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',draw);
+</script>
+</body>
+</html>
